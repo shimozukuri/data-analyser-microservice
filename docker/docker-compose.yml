@@ -13,8 +13,6 @@ volumes:
     driver: local
   zookeeper-data:
     driver: local
-  debezium-data:
-    driver: local
 
 services:
   generator:
@@ -45,22 +43,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - '8082:8082'
-
-  store:
-    image: 'shimozukuri/data-store-microservice:latest'
-    networks:
-      - app
-    depends_on:
-      - debezium
-      - redis
-      - kafka
-    environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
-      - DEBEZIUM_KAFKA_BROKER_ID=${DEBEZIUM_KAFKA_BROKER_ID}
-    ports:
-      - '8083:8083'
 
   zookeeper:
     image: 'confluentinc/cp-zookeeper:latest'
@@ -115,24 +97,3 @@ services:
     command: redis-server --save 20 1 --loglevel warning
     volumes:
       - redis-data:/data
-
-  debezium:
-    image: 'debezium/connect:3.0.0.Final'
-    networks:
-      - app
-    depends_on:
-      - kafka
-    environment:
-      - BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
-      - GROUP_ID=${DEBEZIUM_KAFKA_BROKER_ID}
-      - CONFIG_STORAGE_TOPIC=my_connect_configs
-      - OFFSET_STORAGE_TOPIC=my_connect_offsets
-      - STATUS_STORAGE_TOPIC=my_connect_statuses
-    user: root
-#    command:
-#      - bash
-#      - -c
-#      - "cd /on-startup; sh run.sh"
-    volumes:
-      - debezium-data:/debezium/data
-      - ./conf/:/on-startup/
