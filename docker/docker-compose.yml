@@ -7,9 +7,13 @@ networks:
 volumes:
   db-data:
     driver: local
+  redis-data:
+    driver: local
   kafka-data:
     driver: local
   zookeeper-data:
+    driver: local
+  debezium-data:
     driver: local
 
 services:
@@ -41,6 +45,22 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - '8082:8082'
+
+  store:
+    image: 'shimozukuri/data-store-microservice:latest'
+    networks:
+      - app
+    depends_on:
+      - debezium
+      - redis
+      - kafka
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - DEBEZIUM_KAFKA_BROKER_ID=${DEBEZIUM_KAFKA_BROKER_ID}
+    ports:
+      - '8083:8083'
 
   zookeeper:
     image: 'confluentinc/cp-zookeeper:latest'
@@ -77,5 +97,38 @@ services:
       - .env
     ports:
       - '5437:5432'
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.2-rc-alpine
+    networks:
+      - app
+    env_file:
+      - .env
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+
+  debezium:
+    image: 'debezium/connect:3.0.0.Final'
+    networks:
+      - app
+    depends_on:
+      - kafka
+    environment:
+      - BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - GROUP_ID=${DEBEZIUM_KAFKA_BROKER_ID}
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+    user: root
+    volumes:
+      - debezium-data:/debezium/data
+      - ./conf/:on-startup
