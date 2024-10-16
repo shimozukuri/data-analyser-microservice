@@ -132,7 +132,7 @@ services:
     command:
       - bash
       - -c
-      - "cd /on-startup; ls; ./run.sh"
+      - "cd /on-startup; sh run.sh"
     volumes:
       - debezium-data:/debezium/data
       - ./conf/:/on-startup/
