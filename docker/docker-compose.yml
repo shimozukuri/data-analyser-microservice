@@ -135,4 +135,4 @@ services:
       - "cd /on-startup; ls; ./run.sh"
     volumes:
       - debezium-data:/debezium/data
-      - ./conf/:on-startup
+      - ./conf/:/on-startup/
