@@ -129,10 +129,6 @@ services:
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_connect_statuses
     user: root
-#    command:
-#      - bash
-#      - -c
-#      - "cd /on-startup; sh run.sh"
     volumes:
       - debezium-data:/debezium/data
       - ./conf/:/on-startup/
