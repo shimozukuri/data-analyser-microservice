@@ -117,7 +117,7 @@ services:
       - redis-data:/data
 
   debezium:
-    image: 'debezium/connect:3.0.0.Final'
+    image: 'debezium/connect:2.4.0.Final'
     networks:
       - app
     depends_on:
